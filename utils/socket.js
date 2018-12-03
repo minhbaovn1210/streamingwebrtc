@@ -58,20 +58,30 @@ module.exports = (socket) => {
                 callback(data)
                 socket.broadcast.emit('notify_new_user_joined_room', data)
                 
-                room[i].host.emit('new_peer', socket.id)
+                room[i].host.emit('new_peer', {id: socket.id, roomID})
 
                 break;
             }
         }
     })
     socket.on('peer_connect', (data, callback) => {
-          for(let i = 0; i < user.length;i++) {
-              if (user[i].id == data.id) {
-                  console.log(user[i].name)
-                  user[i].emit('peer_connect', data, callback);
-                  break;
-              }
-          }
+        if (data.isHost) {
+            for(let i = 0; i < user.length;i++) {
+                if (user[i].id == data.id) {
+                    console.log(user[i].name)
+                    user[i].emit('peer_connect', data, callback);
+                    break;
+                }
+            }
+        } else {
+            for (let i = 0; i < room.length; i++) {
+                if(data.roomID == room[i].id) {
+                    room[i].host.emit('peer_connect', data, callback);
+                    break;
+                }
+            }
+        }
+          
     })
     socket.on('left_room', (roomID, callback) => {
         let result ={

@@ -3,10 +3,11 @@ var user = [],
 // user have more socket (add socket.name)
 // one room have id, host, peers(socketArray)
 module.exports = (socket) => {
-    socket.on('register_new_user', name => {
+    socket.on('register_new_user', (name, callback) => {
         socket.name = name;
         user.push(socket)
         socket.broadcast.emit('notify_new_user_connected', {name, id: socket.id})
+        callback(name,socket.id)
         console.log("new user has connected, total ", user.length);
     })
     socket.on('load_users', (data, callback) => {

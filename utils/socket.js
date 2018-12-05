@@ -33,7 +33,8 @@ module.exports = (socket) => {
         room.push({
             id,
             host: socket,
-            peers: []
+            peers: [],
+            sharing: false
         })
         let data = {
             id,
@@ -56,32 +57,59 @@ module.exports = (socket) => {
                 }
                 room[i].peers.push(socket)
                 callback(data)
-                socket.broadcast.emit('notify_new_user_joined_room', data)
-                
-                room[i].host.emit('new_peer', {id: socket.id, roomID})
-
+                socket.broadcast.emit('notify_new_user_joined_room', data) 
+                break;
+            }
+        }
+    })
+    socket.on('broadcast_host_share_stream', (roomID,callback) => {
+        for (let i = 0; i < room.length; i++) {
+            if (room[i].id == roomID) {
+                room[i].sharing = true;
+                room[i].peers.forEach(p => {
+                    socket.emit('peer_connect', {id: p.id, roomID, type: 'host_create'})
+                    p.emit('peer_connect', {id: socket.id, roomID, type: 'client_create'})
+                })
+                break;
+            }
+        }
+    })
+    socket.on('new_peer_get_stream', roomID => {
+        for (let i = 0; i < room.length; i++) {
+            if (room[i].id == roomID) {
+                if (room[i].sharing) {
+                    room[i].host.emit('peer_connect', {id: socket.id, roomID, type: 'host_create'})
+                    socket.emit('peer_connect', {id: room[i].host.id, roomID, type: 'client_create'})
+                }
                 break;
             }
         }
     })
     socket.on('peer_connect', (data, callback) => {
-        if (data.isHost) {
-            for(let i = 0; i < user.length;i++) {
-                if (user[i].id == data.id) {
-                    console.log(user[i].name)
-                    user[i].emit('peer_connect', data, callback);
-                    break;
+        for(let i = 0; i < room.length;i++) {
+            if (room[i].id == data.roomID) {
+                if (data.type == 'stop') {
+                    room[i].sharing = false;
+                    room[i].peers.forEach(peer => {
+                        peer.emit('peer_connect', data, callback);
+                    })
                 }
-            }
-        } else {
-            for (let i = 0; i < room.length; i++) {
-                if(data.roomID == room[i].id) {
+                else if (data.id == room[i].host.id) {
+                    data.id = socket.id;
                     room[i].host.emit('peer_connect', data, callback);
-                    break;
                 }
+                else {
+                    for (let y = 0; y < room[i].peers.length; y++) {
+                        if (room[i].peers[y].id == data.id) {
+                            data.id = room[i].host.id;
+                            room[i].peers[y].emit('peer_connect', data, callback);
+                            break;
+                        }
+                    }
+                }
+                break;
             }
         }
-          
     })
     socket.on('left_room', (roomID, callback) => {
         let result ={
@@ -94,6 +122,7 @@ module.exports = (socket) => {
         for (let i = 0; i < roomLength; i++) {
             if (room[i].id == roomID) {
                 if (room[i].host == socket) {
+                    room[i].sharing = false;
                     if (room[i].peers.length > 0) {
                         room[i].host = room[i].peers[0];
                         result.newHost = {id: room[i].peers[0].id, name: room[i].peers[0].name};
@@ -111,6 +140,7 @@ module.exports = (socket) => {
                     if (peerIndex >= 0) {
                         room[i].peers[peerIndex] = room[i].peers[room[i].peers.length - 1];
                         room[i].peers.pop();
+                        room[i].host.emit('peer_close', socket.id)
                     }
                 }
                 break;
@@ -130,6 +160,10 @@ module.exports = (socket) => {
         let roomLength = room.length;
         for (let i = 0; i < roomLength; i++) {
             if (room[i].host == socket) {
+                room[i].sharing = false;
+                room[i].peers.forEach(peer => {
+                    peer.emit('peer_connect', {type: 'stop'});
+                })
                 if (room[i].peers.length > 0) {
                     room[i].host = room[i].peers[0];
                     result.newHost = {id: room[i].peers[0].id, name: room[i].peers[0].name};
@@ -149,6 +183,7 @@ module.exports = (socket) => {
                     result.roomID = room[i].id;
                     room[i].peers[peerIndexInRoom] = room[i].peers[room[i].peers.length - 1];
                     room[i].peers.pop();
+                    room[i].host.emit('peer_close', socket.id)
                     break;
                 }
             }

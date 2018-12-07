@@ -1,0 +1,14 @@
+{
+  "name":"SCC Screen Capture",
+  "description":"Share your screen",
+  "version":"0.0.1",
+  "manifest_version": 2,
+  "background": {
+    "scripts": ["extension.js"],
+    "persistent": false
+  },
+  "externally_connectable": {
+    "matches": ["*://localhost:*/*", "https://scc-live.herokuapp.com/*"]
+  },
+  "permissions": ["desktopCapture"]
+}

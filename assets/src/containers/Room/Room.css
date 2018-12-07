@@ -1,0 +1,17 @@
+.my-video {
+    margin-left: 10%;
+    width: 80%;
+    height: 560px;
+    position: relative;
+}
+.subScreen {
+    width: 155px;
+    height: 150px;
+    position: fixed;
+    top: 0;
+    right: 0;
+}
+.fullScreen {
+    width: 100%;
+    height: 100%;
+}

@@ -1,0 +1,1 @@
+export const backend_url = `http://${process.env.BACKEND_IP}:${process.env.BACKEND_PORT}/api`;

@@ -1,33 +1,40 @@
-import React,{Component} from 'react';
-import {connect} from 'react-redux';
-import {Link} from 'react-router-dom';
-import {loginAction, verifyAction} from '../../actions/user';
+import React, { Component } from 'react';
+import { connect } from 'react-redux';
+import { Link } from 'react-router-dom';
+import { loginAction, verifyAction } from '../../actions/user';
 import { Input, Button } from 'antd';
 import socketClient from '../../utils/socketClient';
+import './style.css';
 
 class Login extends Component {
     state = {
         name: ''
     }
     componentDidMount() {
-        //this.props.verify();
+
     }
-    render(){
-        // if (this.props.user.token) {
-        //     return <Redirect to="/"/>
-        // }
+
+    onChange = (e) => {
+        this.setState({ name: e.target.value })
+    }
+
+    render() {
         return (
             <React.Fragment>
-                <div>Login Page</div>
-                Input name:&nbsp;
-                <Input 
-                    value={this.state.name} 
-                    onChange={(e) => this.setState({name: e.target.value})} 
-                    size="small" 
-                    style={{width: '100px'}}
-                />
-                &nbsp;<Link to="/home"><Button onClick={() => this.props.login(this.state.name, socketClient.emitRegisterNewUser)}>Click to login</Button></Link>
-            </React.Fragment>
+                <div className="box_login">
+                    <h1>Login Page</h1>
+                    <Input
+                        value={this.state.name}
+                        onChange={this.onChange}
+                        size="small"
+                        style={{ width: '100px' }}
+                        className="input_text"
+                    />
+                    <Link to="/home">
+                        <Button onClick={() => this.props.login(this.state.name, socketClient.emitRegisterNewUser)}>Click to login</Button>
+                    </Link>
+                </div>
+            </React.Fragment >
         )
     }
 }

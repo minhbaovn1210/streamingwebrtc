@@ -1,0 +1,15 @@
+.box_login{
+    height: 80vh;
+    width: 100vw;   
+    flex-direction: column;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.input_text{
+    width: 30% !important;
+    height: 30px !important;
+    margin: 15px 0px !important;
+    text-align: center !important;
+}

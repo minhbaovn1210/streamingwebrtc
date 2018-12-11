@@ -51,6 +51,7 @@
     display: inline-block;
     border: none;
     margin-top: 20px;
+    cursor: pointer;
 }
 
 .a-login .round {

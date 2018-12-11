@@ -34,7 +34,7 @@ class Room extends Component {
         }))
     }
     render() {
-        const {name} = this.props.user;
+        const {name, id} = this.props.user;
         if (!name) {
             return <Redirect to={{pathname:"/"}}/>
         }
@@ -46,7 +46,7 @@ class Room extends Component {
                 <h1>Live</h1>
                 <div>
                 {!window.location.href.includes("/host") &&
-                <a href={"/" + name} 
+                <a href={"/?name=" + name} 
                     onClick={() => {
                         stopStream()
                         socketClient.emitLeftRoom(currentRoom.id, null);
@@ -56,7 +56,7 @@ class Room extends Component {
                 </a>}
                 {window.location.href.includes("/host") &&
                 <React.Fragment>
-                <a href={"/" + name} 
+                <a href={"/?name=" + name} 
                     onClick={() => {
                         stopStream()
                         hostStopStream(currentRoom.id)
@@ -109,9 +109,22 @@ class Room extends Component {
                         onMouseOut={() => {this.setState({isShowUserList: false})}}
                     />
                     <div className="user-in-room" style={{display: isShowUserList ? 'block' : 'none'}}>
-                        {currentRoom && currentRoom.peers.map(c => (
-                            <button key={c.id}>{c.name}</button>
-                        ))}
+                        {currentRoom.host.id == id && 
+                            <button className="my-account" key={id}>{name} (me)</button>
+                        }
+                        {currentRoom.host.id != id && 
+                            <React.Fragment>
+                            <button className="my-account" key={id}>{name} (me)</button>
+                            <button key={currentRoom.host.id}>{currentRoom.host.name} (host)</button>
+                            </React.Fragment>
+                        }
+                        {currentRoom && currentRoom.peers.map(c => {
+                            if (c.name != name) {
+                                return (
+                                    <button key={c.id}>{c.name}</button>
+                                )}
+                            }
+                        )}
                     </div>
                 </div>
             </div>

@@ -2,7 +2,7 @@ import React,{Component} from 'react';
 import {connect} from 'react-redux';
 import {Link} from 'react-router-dom';
 import {loginAction, verifyAction} from '../../actions/user';
-import { Input, Button } from 'antd';
+import { Input, Icon } from 'antd';
 import socketClient from '../../utils/socketClient';
 import './style.css';
 import logo from './FPT.png';
@@ -12,10 +12,10 @@ class Login extends Component {
         name: ''
     }
     componentDidMount() {
-        let array = window.location.href.split('/');
-        if (array[array.length - 1] != "") {
+        let array = window.location.search.split('?name=');
+        if (array[1]) {
             this.setState({
-                name: array[array.length - 1]
+                name: array[1]
             })
         }
     }
@@ -38,7 +38,7 @@ class Login extends Component {
                             <div>
                                 <button className="btn btn-1" onClick={() => this.props.login(this.state.name, socketClient.emitRegisterNewUser)}>
                                     <span className="txt">Tham gia</span>
-                                    <span className="round"><i className="fa fa-chevron-right"></i></span>
+                                    <span className="round"><Icon style={{fontSize: '20pt', margin: "-13px 0 0 -12px"}} type="right-circle" /></span>
                                 </button>
                             </div>
                         </div>

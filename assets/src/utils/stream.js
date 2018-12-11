@@ -1,5 +1,5 @@
 import socketClient from './socketClient';
-const EXTENSION_ID = 'deifcdeanbcgmdahmihammgpkdeddboi';
+import {notification} from 'antd';
 let localStreams = [];
 let myPeerArray = [];
 const iceServers = {
@@ -31,9 +31,9 @@ async function getVideoStream(idElement) {
     });
     localStreams[0] = stream;
     localStreams[0].type = 'video';
-    playStream(idElement, stream);
+    playStream(idElement, stream, true);
 }
-function getScreenStream() {
+function getScreenStream(idElement, EXTENSION_ID) {
     try {
         window.chrome.runtime.sendMessage(EXTENSION_ID, { sources:  ['window', 'screen', 'tab']}, response => {
           if (response && response.type === 'success') {
@@ -46,7 +46,7 @@ function getScreenStream() {
               }
             }).then(returnedStream => {
               localStreams[1] = returnedStream;
-              playStream('myScreen', returnedStream)
+              playStream(idElement, returnedStream)
             }).catch(err => {
               alert('Không lấy được dữ liệu từ màn hình')
             });
@@ -61,14 +61,17 @@ function getScreenStream() {
           }
         }).then(returnedStream => {
           localStreams[1] = returnedStream;
-          playStream('myScreen', returnedStream);
+          playStream(idElement, returnedStream);
         });
       }
 }
-function playStream(idVideo, stream) {
+function playStream(idVideo, stream, isHost = false) {
     try {
         var video = document.getElementById(idVideo)
         video.srcObject = stream;
+        if (isHost) {
+            video.muted = true;
+        }
     } catch(ex) {
         stopStream()
     }
@@ -79,15 +82,15 @@ export function closeAllPeers(peerArray) {
     })
     return [];
 }
-export function stopStream(){
-    if (myPeerArray != null) {
-        myPeerArray = closeAllPeers(myPeerArray)
-    }
+export async function stopStream(){
     if (localStreams[0]) {          
         localStreams[0].getTracks().forEach((track) => {track.stop();})     
     }
     if (localStreams[1]) {          
         localStreams[1].getTracks().forEach((track) => {track.stop();})     
+    }
+    if (myPeerArray != null) {
+        myPeerArray = closeAllPeers(myPeerArray)
     }
     localStreams = [];
 }
@@ -97,23 +100,25 @@ export function hostStopStream(roomID) {
         id: null, roomID
     })
 }
-export async function hostGetStream(video = false, screen = false) {
+export async function hostGetStream(video = false, screen = false, EXTENSION_ID = null) {
+    notification.success({message: 'Get your stream!'});
     if (video && screen == false) {
         await stopStream();
         await getVideoStream("myScreen");
     }
     else if (screen && video == false) {
         await stopStream();
-        await getScreenStream("myScreen");
+        await getScreenStream("myScreen", EXTENSION_ID);
     }
     else if (video && screen) {
         await stopStream();
         await getVideoStream("myVideo");
-        await getScreenStream("myScreen");
+        await getScreenStream("myScreen", EXTENSION_ID);
     }
 }
 
 export function shareStream(roomID) {
+    notification.success({message: 'Start share stream!'});
     hostStopStream();
     socketClient.emitBroadcastHostShareStream(roomID);
 }
@@ -141,13 +146,18 @@ function newPeer(userID, roomID) {
     return newPeer;
 }
 export const closePeer = (userID) => {
-    for (let i = 0; i < myPeerArray.length; i++) {
-        if (myPeerArray[i].userID == userID) {
-            myPeerArray[i] = myPeerArray[0];
-            myPeerArray.shift();
-            break;
+    try {
+        const i = getCandidateIndexInPeerArray(userID);
+        if (localStreams[0]) {
+            myPeerArray[i].peer.removeStream(localStreams[0]);
         }
-    }
+        if (localStreams[1]) {
+            myPeerArray[i].peer.removeStream(localStreams[1]);
+        }
+        myPeerArray[i].peer.close();
+        myPeerArray[i] = myPeerArray[0];
+        myPeerArray.shift();
+    } catch(ex) {}
 }
 const getCandidateIndexInPeerArray = (userID) => {
     for (let i = 0; i < myPeerArray.length; i++) {

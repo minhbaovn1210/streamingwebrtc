@@ -1,0 +1,23 @@
+.home-body-room h2 {
+    font-weight: bold;
+    color: #A359DE;
+    margin-left: 50px;
+}
+.room-content {
+    width: 100%;
+    height: 100%;
+}
+.room-item {
+    text-align: center;
+    font-size: 14pt;
+    color: #FDCC00;
+    border: 1px solid #FDCC00;
+    border-radius: 45px;
+    margin: 15px 15px 15px 15px;
+    width: 200px;
+    float: left;
+    cursor: pointer;
+}
+.room-item:hover {
+    border: 1px solid #05CD72;
+}

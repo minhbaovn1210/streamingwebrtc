@@ -14,19 +14,19 @@ import {
     notifyUserLeftRoomAction,
     notifyNewPeerJoinedRoomAction
 } from '../../actions/room';
-import {Button} from 'antd';
+import {Icon} from 'antd';
 import socketClient from '../../utils/socketClient';
 import UserList from '../../components/UserList/UserList';
 import RoomList from '../../components/RoomList/RoomList';
 import uuidv1 from 'uuid/v1';
-// import {clientConnect} from '../../utils/stream';
+import './Home.css';
+
 class Home extends Component {
     constructor() {
         super()
         this.generateRoomID = uuidv1();
     }
     componentDidMount() {
-        //this.props.verify();
         socketClient.onNotifyNewUserConnected(null, this.props.newUser);
         socketClient.emitLoadUsers(null, this.props.loadUserList);
         socketClient.emitLoadRooms(null, this.props.loadRoomList);
@@ -36,28 +36,35 @@ class Home extends Component {
         socketClient.onNotifyNewUserJoinedRoom(null, this.props.notifyNewPeerJoinedRoom);
     }
     render() {
-        // if (!this.props.user.token) {
-        //     return <Redirect to="/login"/>
-        // }
+        const {name} = this.props.user;
+        if (!name) {
+            return <Redirect to={{pathname:"/"}}/>
+        }
         const urlRoom = "/room/" + this.generateRoomID + "/host";
-        const userID = this.props.user.id;
         const roomListWithAction = this.props.room.roomList.map(r => ({
             ...r,
             join: () => {
-                    socketClient.emitJoinRoom(r.id, this.props.joinRoom)
-                    //clientConnect(userID, r.id)
-                }
+                socketClient.emitJoinRoom(r.id, this.props.joinRoom)
+            }
         }))
         return(
-            <React.Fragment>
-                <h1>HOME</h1>
+            <div className="home">
+                <h1><Icon type="thunderbolt" theme="filled" /><Icon type="fast-backward" /> - <Icon type="fire" theme="filled"/> </h1>
                 <Link to={urlRoom} onClick={() => socketClient.emitCreateRoom(this.generateRoomID, this.props.createRoom)}>
-                    <Button>Create Room</Button>
+                    <Icon className="create-room" 
+                    type="youtube" />
                 </Link>
+                <span style={{color: '#FDCC00'}}> Go Live!</span>
                 <hr/>
-                <RoomList roomList={roomListWithAction}/>
-                <UserList userList={this.props.user.userList}/>
-            </React.Fragment>
+                <div className="home-body">
+                    <div className="home-body-room">
+                        <RoomList roomList={roomListWithAction}/>
+                    </div>
+                    <div className="home-body-user">
+                        <UserList userList={this.props.user.userList}/>
+                    </div>
+                </div>
+            </div>
         )
     }
 }

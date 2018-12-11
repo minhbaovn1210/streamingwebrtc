@@ -1,39 +1,23 @@
 import React from 'react';
-import css from './RoomList.css';
+import './RoomList.css';
 import {Link} from 'react-router-dom';
-import { Table, Divider, Tag } from 'antd';
-
-const columns = [{
-  title: 'Room ID',
-  dataIndex: 'id',
-  key: 'id'
-}, {
-  title: 'Host',
-  dataIndex: 'host.name',
-  key: 'host',
-}, {
-  title: 'Action',
-  key: 'action',
-  render: (text, record) => {
-    let urlRoom = "/room/" + record.id;
-    return (
-      <span>
-        <Link to={urlRoom} onClick={record.join}>Join</Link>
-      </span>
-    )
-  },
-}];
 
 export default class RoomList extends React.Component {
     render() {
         return(
-            <div>
+            <React.Fragment>
                 <h2>ROOM LIST</h2>
-                <Table 
-                rowKey={record => record.id} columns={columns} 
-                dataSource={this.props.roomList} 
-                style={{width: '600px'}}/>
-            </div>
+                <div className="room-content">
+                {this.props.roomList.map((room, index) => (
+                  <Link key={index} to={'/room/' + room.id} onClick={room.join}>
+                  <div className="room-item">
+                    <img src="https://scontent.fsgn2-4.fna.fbcdn.net/v/t1.0-0/s180x540/47433841_338675586687850_8379925538927542272_n.png?_nc_cat=109&_nc_oc=AWO7b_5sKPzK3S5bGNKI1Lgmy0L-76IussLZjEQEwNZ9AF5F6wHcxGsd13xgLw&_nc_ht=scontent.fsgn2-4.fna&oh=28dbf222ae5fc04f87bc292a8b3eb69c&oe=5C9848F8"></img>
+                    <div>{room.host.name}</div>
+                  </div>
+                  </Link>
+                ))}
+                </div>
+            </React.Fragment>
         )
     }
 }

@@ -1,9 +1,9 @@
 import React, {Component} from 'react';
-import {Link, Redirect} from 'react-router-dom';
 import {connect} from 'react-redux';
 import {verifyAction} from '../../actions/user';
 import socketClient from '../../utils/socketClient';
-import {Button} from 'antd';
+import {Redirect} from 'react-router-dom';
+import {Icon, Checkbox, Input} from 'antd';
 import {
     hostGetStream, 
     stopStream,
@@ -14,91 +14,88 @@ import './Room.css';
 class Room extends Component {
     state = {
         video: true,
-        screen: false
+        screen: false,
+        isShowUserList: false,
+        EXTENSION_ID: 'deifcdeanbcgmdahmihammgpkdeddboi'
     }
     componentDidMount() {
         socketClient.onListenPeer();
         socketClient.emitNewPeerGetStream(this.props.room.currentRoom);
         socketClient.onPeerLeftMyRoom();
     }
-    onChangeScreen = (e) => {
-        switch(e.target.value) {
-            case 'video':
-                this.setState({
-                    video: true,
-                    screen: false
-                })
-                break;
-            case 'screen':
-                this.setState({
-                    video: false,
-                    screen: true
-                })
-                break;
-            case 'both':
-                this.setState({
-                    video: true,
-                    screen: true
-                })
-                break;
-            default:
-                this.setState({
-                    video: false,
-                    screen: false
-                })
-        }
+    onChangeChooseScreen = (e) => {
+        this.setState(pre => ({
+            screen: !pre.screen
+        }))
+    }
+    onChangeChooseCamera = (e) => {
+        this.setState(pre => ({
+            video: !pre.video
+        }))
     }
     render() {
+        const {name} = this.props.user;
+        if (!name) {
+            return <Redirect to={{pathname:"/"}}/>
+        }
         const {room} = this.props;
         const currentRoom = (room.roomList.filter(r => r.id == room.currentRoom))[0] || null;
-        const {video, screen} = this.state;
+        const {video, screen, isShowUserList, EXTENSION_ID} = this.state;
         return(
-            <React.Fragment>
-                <div>ROOM</div>
+            <div className="room">
+                <h1>Live</h1>
                 <div>
                 {!window.location.href.includes("/host") &&
-                <Link to="/home" 
+                <a href={"/" + name} 
                     onClick={() => {
                         stopStream()
                         socketClient.emitLeftRoom(currentRoom.id, null);
                     }}
                 >
-                <Button>Back to Home</Button>
-                </Link>}
+                <Icon className="left-icon" type="left-square" theme="filled"/>
+                </a>}
                 {window.location.href.includes("/host") &&
                 <React.Fragment>
-                <Link to="/home" 
+                <a href={"/" + name} 
                     onClick={() => {
                         stopStream()
                         hostStopStream(currentRoom.id)
                         socketClient.emitLeftRoom(currentRoom.id, null);
                     }}
                 >
-                <Button>Back to Home</Button>
-                </Link>
-                <form>
-                    <input onChange={this.onChangeScreen} 
-                        type="radio" name="getScreen" value="video" 
-                        checked={video == true && screen == false}/> Video
-                    <input onChange={this.onChangeScreen} 
-                        type="radio" name="getScreen" value="screen"
-                        checked={video == false && screen == true}/> Screen
-                    <input onChange={this.onChangeScreen} 
-                        type="radio" name="getScreen" value="both"
-                        checked={video == true && screen == true}/> Both
-                    <Button 
-                        onClick={() => hostGetStream(video, screen)}
-                    >Get Stream</Button>
-                    <Button
-                        onClick={() => shareStream(currentRoom.id)}
-                    >Share to all users</Button>
-                    <Button
-                        onClick={() => {
-                            stopStream();
-                            hostStopStream(currentRoom.id);
-                        }}
-                    >Stop Stream
-                    </Button>
+                <Icon className="left-icon" type="left-square" theme="filled" />
+                </a>
+                <form className="room-form">
+                    <div className="checkbox">
+                        <Checkbox checked={this.state.video} onChange={this.onChangeChooseCamera}>Camera</Checkbox><br/>
+                        <Checkbox checked={this.state.screen} onChange={this.onChangeChooseScreen}>Screen</Checkbox>
+                    </div>
+                    <div className="camera-button">
+                        <Icon type="video-camera" theme="filled" 
+                            onClick={() => hostGetStream(video, screen, EXTENSION_ID)}
+                        />
+                        <Icon type="caret-right" 
+                        
+                            onClick={() => shareStream(currentRoom.id)}
+                        />
+                        <Icon type="close" 
+                            onClick={() => {
+                                stopStream();
+                                hostStopStream(currentRoom.id);
+                            }}
+                        />
+                    </div>
+                    {
+                        window.chrome.runtime && 
+                        <div className="chrome-extension">
+                        <Input 
+                            value={EXTENSION_ID}
+                            onChange={(e) => this.setState({EXTENSION_ID: e.target.value})} 
+                            placeholder={'Extension ID'}
+                        /><br />
+                        <a target="_blank" href="https://drive.google.com/file/d/1RRbAtmcspVSuzn4cX3ZwAdeKQTO7T0VX/view?usp=sharing">Click to download Extension</a>
+                        </div>
+                    }
                 </form>
                 </React.Fragment>}
                 </div>
@@ -106,13 +103,18 @@ class Room extends Component {
                     <video id="myVideo" className="subScreen" autoPlay></video>
                     <video id="myScreen" className="fullScreen" autoPlay></video>
                 </div>
-                <ul>
-                    <li><b>{currentRoom != null ? currentRoom.host.name : ''}</b></li>
-                    {currentRoom != null && currentRoom.peers.length > 0 && currentRoom.peers.map(c => (
-                        <li key={c.id}>{c.name}</li>
-                    ))}
-                </ul>
-            </React.Fragment>
+                <div>
+                    <Icon type="team" className="icon-list-user"
+                        onMouseOver={() => {this.setState({isShowUserList: true})}}
+                        onMouseOut={() => {this.setState({isShowUserList: false})}}
+                    />
+                    <div className="user-in-room" style={{display: isShowUserList ? 'block' : 'none'}}>
+                        {currentRoom && currentRoom.peers.map(c => (
+                            <button key={c.id}>{c.name}</button>
+                        ))}
+                    </div>
+                </div>
+            </div>
         )
     }
 }
